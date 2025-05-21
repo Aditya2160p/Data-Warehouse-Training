@@ -1,0 +1,90 @@
+1.create db
+test> use bugtracker
+switched to db bugtracker
+
+
+2. insert record
+bugtracker> db.bugs.insertMany([
+... {title:"UI Reloading",
+... reportedBy:"Aditya",
+... status:"open",
+... priority:"medium",
+... createdAt:"20-05-2025"},
+... {title:"Backend conectivity issues",
+... reportedBy:"arjun",
+... status:"open",
+... priority:"high",
+... createdAt:"21-05-2025"},
+... {title:"app performance is slow",
+... reportedBy:"kiren",
+... status:"closed",
+... priority:"medium",
+... createdAt:"19-05-2025"}])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('682db506aaabf493586c4bd0'),
+    '1': ObjectId('682db506aaabf493586c4bd1'),
+    '2': ObjectId('682db506aaabf493586c4bd2')
+  }
+}
+
+
+3.find collections which have open status and high priority
+bugtracker> db.bugs.find({status:"open",priority:"high"})
+[
+  {
+    _id: ObjectId('682db506aaabf493586c4bd1'),
+    title: 'Backend conectivity issues',
+    reportedBy: 'arjun',
+    status: 'open',
+    priority: 'high',
+    createdAt: '21-05-2025'
+  }
+]
+
+
+4.update specific bug to status as closed
+bugtracker> db.bugs.updateOne({title:"UI Reloading"},{$set:{status:"closed"}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+5.delete bug which was reported by test user
+bugtracker> db.bugs.deleteOne({reportedBy:"Test User"})
+{ acknowledged: true, deletedCount: 0 }
+
+
+final database values
+bugtracker> db.bugs.find()
+[
+  {
+    _id: ObjectId('682db506aaabf493586c4bd0'),
+    title: 'UI Reloading',
+    reportedBy: 'Aditya',
+    status: 'closed',
+    priority: 'medium',
+    createdAt: '20-05-2025'
+  },
+  {
+    _id: ObjectId('682db506aaabf493586c4bd1'),
+    title: 'Backend conectivity issues',
+    reportedBy: 'arjun',
+    status: 'open',
+    priority: 'high',
+    createdAt: '21-05-2025'
+  },
+  {
+    _id: ObjectId('682db506aaabf493586c4bd2'),
+    title: 'app performance is slow',
+    reportedBy: 'kiren',
+    status: 'closed',
+    priority: 'medium',
+    createdAt: '19-05-2025'
+  }
+]
