@@ -1,0 +1,375 @@
+ ---MongoDB Exercise Set #2: Project & Task Tracker
+ ---Database: taskmanager  Collections: projects, tasks, users
+ ---Section 1: Basic Document Modeling & Insertion
+ ---1  Create a database called taskmanager
+
+
+test> use taskmanager
+switched to db taskmanager
+
+--- 2  Insert 3 users into a users collection. Each should have:
+ name (string)
+ email (string)
+ role (either "admin", "manager", or "developer")
+ active (boolean)
+
+taskmanager> db.users.insertMany([
+...   { name: "Aditya", email: "aditya@gmail.com", role: "admin", active: true },
+...   { name: "Barath", email: "barath@gmail.com", role: "developer", active: true },
+...   { name: "Christo", email: "christo@gmail.com", role: "manager", active: false }
+... ])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('68302ee2905fe8f9a66c4bd0'),
+    '1': ObjectId('68302ee2905fe8f9a66c4bd1'),
+    '2': ObjectId('68302ee2905fe8f9a66c4bd2')
+  }
+}
+
+
+--- 3  Insert 2 projects into a projects collection:
+ title, description, startDate, status (e.g. "active", "completed")
+ Embed a createdBy sub-document containing the user’s _id, name
+ taskmanager> db.projects.insertMany([
+...   {
+...     title: "Project A",
+...     description: "Build entire app",
+...     startDate: new Date(),
+...     status: "active",
+...     createdBy: { _id: aditya._id, name: aditya.name }
+...   },
+...   {
+...     title: "Project B",
+...     description: "Develop backend connections",
+...     startDate: new Date("2024-12-01"),
+...     status: "completed",
+...     createdBy: { _id: christo._id, name: christo.name }
+...   }
+... ])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('68302ffcaab816e8186c4bd0'),
+    '1': ObjectId('68302ffcaab816e8186c4bd1')
+  }
+}
+
+
+---4  Insert 5 tasks into a tasks collection:
+ Fields: title, assignedTo (user _id), projectId, priority, dueDate,
+ status
+
+taskmanager> let barath = db.users.findOne({ name: "Barath" })
+taskmanager> let christo = db.users.findOne({ name: "Christo" })
+taskmanager> let aditya = db.users.findOne({ name: "Aditya" })
+
+taskmanager> let projectB = db.projects.findOne({ title: "Project B" })
+
+...   {
+...     title: "Design the website structure",
+...     assignedTo: barath._id,
+...     projectId: projectA._id,
+...     priority: "high",
+...     dueDate: new Date("2025-06-01"),
+...     status: "pending"
+...   },
+...   {
+...     title: "Set up database schema",
+...     assignedTo: aditya._id,
+...     projectId: projectB._id,
+...     priority: "medium",
+...     dueDate: new Date("2025-05-30"),
+...     status: "in progress"
+...   },
+...   {
+...     title: "Create user api",
+...     assignedTo: barath._id,
+...     projectId: projectB._id,
+...     priority: "high",
+...     dueDate: new Date("2025-05-25"),
+...     status: "pending"
+...   },
+...   {
+...     title: "UI testing",
+...     assignedTo: christo._id,
+...     projectId: projectA._id,
+...     priority: "low",
+...     dueDate: new Date("2025-06-15"),
+...     status: "pending"
+...   },
+...   {
+...     title: "Finalize the website",
+...     assignedTo: aditya._id,
+...     projectId: projectA._id,
+...     priority: "high",
+...     dueDate: new Date("2025-05-28"),
+...     status: "pending"
+...   }
+... ])
+{
+  acknowledged: true,
+  insertedIds: {
+    '0': ObjectId('68303090aab816e8186c4bd2'),
+    '1': ObjectId('68303090aab816e8186c4bd3'),
+    '2': ObjectId('68303090aab816e8186c4bd4'),
+    '3': ObjectId('68303090aab816e8186c4bd5'),
+    '4': ObjectId('68303090aab816e8186c4bd6')
+  }
+}
+
+--- Section 2: Filtering & Querying
+ 5  Find all tasks with priority "high" that are not completed
+
+taskmanager> db.tasks.find({priority:"high",status:{$ne:"completed"}})
+[
+  {
+    _id: ObjectId('68303090aab816e8186c4bd2'),
+    title: 'Design the website structure',
+    assignedTo: ObjectId('68302ee2905fe8f9a66c4bd1'),
+    projectId: ObjectId('68302ffcaab816e8186c4bd0'),
+    priority: 'high',
+    dueDate: ISODate('2025-06-01T00:00:00.000Z'),
+    status: 'pending'
+  },
+  {
+    _id: ObjectId('68303090aab816e8186c4bd4'),
+    title: 'Create user api',
+    assignedTo: ObjectId('68302ee2905fe8f9a66c4bd1'),
+    projectId: ObjectId('68302ffcaab816e8186c4bd1'),
+    priority: 'high',
+    dueDate: ISODate('2025-05-25T00:00:00.000Z'),
+    status: 'pending'
+  },
+  {
+    _id: ObjectId('68303090aab816e8186c4bd6'),
+    title: 'Finalize the website',
+    assignedTo: ObjectId('68302ee2905fe8f9a66c4bd0'),
+    projectId: ObjectId('68302ffcaab816e8186c4bd0'),
+    priority: 'high',
+    dueDate: ISODate('2025-05-28T00:00:00.000Z'),
+    status: 'pending'
+  }
+]
+
+--- 6  Query all active users with role "developer"
+
+taskmanager> db.users.find({active:true,role:"developer"})
+[
+  {
+    _id: ObjectId('68302ee2905fe8f9a66c4bd1'),
+    name: 'Barath',
+    email: 'barath@gmail.com',
+    role: 'developer',
+    active: true
+  }
+]
+
+
+--- 7  Find all tasks assigned to a specific user (by ObjectId)
+
+taskmanager> db.tasks.find({assignedTo:aditya._id})
+[
+  {
+    _id: ObjectId('68303090aab816e8186c4bd3'),
+    title: 'Set up database schema',
+    assignedTo: ObjectId('68302ee2905fe8f9a66c4bd0'),
+    projectId: ObjectId('68302ffcaab816e8186c4bd1'),
+    priority: 'medium',
+    dueDate: ISODate('2025-05-30T00:00:00.000Z'),
+    status: 'in progress'
+  },
+  {
+    _id: ObjectId('68303090aab816e8186c4bd6'),
+    title: 'Finalize the website',
+    assignedTo: ObjectId('68302ee2905fe8f9a66c4bd0'),
+    projectId: ObjectId('68302ffcaab816e8186c4bd0'),
+    priority: 'high',
+    dueDate: ISODate('2025-05-28T00:00:00.000Z'),
+    status: 'pending'
+  }
+]
+
+
+
+--- 8  Find all projects started in the last 30 days
+taskmanager> const y=new Date();
+taskmanager> y.setDate(y.getDate()-30);
+1745397227347
+taskmanager> db.projects.find({ startDate: { $gte: new ISODate(y.toISOString()) } })
+[
+  {
+    _id: ObjectId('68302ffcaab816e8186c4bd0'),
+    title: 'Project A',
+    description: 'Build entire app',
+    startDate: ISODate('2025-05-23T08:21:16.201Z'),
+    status: 'active',
+    createdBy: { _id: ObjectId('68302ee2905fe8f9a66c4bd0'), name: 'Aditya' }
+  } _id: ObjectId('68302ffcaab816e8186c4bd0'),
+]   title: 'Project A',
+taskmanager>
+    startDate: ISODate('2025-05-23T08:21:16.201Z'),
+    status: 'active',
+    createdBy: { _id: ObjectId('68302ee2905fe8f9a66c4bd0'), name: 'Aditya' }
+  }
+]
+
+
+
+ ---Section 3: Update Operations
+ ---9  Change the status of one task to "completed"
+taskmanager> db.tasks.updateOne(
+... {title:"Create user api"},
+... {$set:{status:"completed"}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+--- 10.Add a new role field called "teamLead" to one of the users
+taskmanager> db.users.updateOne({name:"Aditya"},{$set:{role:"teamlead"}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+
+---11  Add a new tag array to a task: ["urgent", "frontend"]
+taskmanager> db.tasks.updateOne( { title: "Design the website structure" }, { $set: { tags: ["urgent", "frontend"] } })
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+
+ Section 4: Array and Subdocument Operations
+ ---12  Add a new tag "UI" to the task’s tags array using $addToSet
+
+taskmanager> db.tasks.updateOne(
+... {title:"Design the website structure"},
+... {$addToSet:{tags:"UI"}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+---13 Remove "frontend" from a task’s tag list
+taskmanager> db.tasks.updateOne({title:"Design the website structure"},{$pull:{tags:"frontend"}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+---14  Use $inc to increment a project’s progress field by 10
+taskmanager> db.projects.updateOne({title:"Project A"},{$inc:{progress:10}})
+{
+  acknowledged: true,
+  insertedId: null,
+  matchedCount: 1,
+  modifiedCount: 1,
+  upsertedCount: 0
+}
+
+
+ Section 5: Aggregation & Lookup
+ ---15 Use $lookup to join tasks with users and show task title + assignee name
+taskmanager>db.tasks.aggregate([
+...{
+...     $lookup: {
+...       from: "users",
+...       localField: "assignedTo",
+...       foreignField: "_id",
+...       as: "user"
+...     }
+...   },
+...   {
+...     $unwind: "$user"
+...   },
+...   {
+...     $project: {
+...       _id: 0,
+...       taskTitle: "$title",
+...       assigneeName: "$user.name"
+...     }
+...   }
+... ])
+[
+  { taskTitle: 'Design the website structure', assigneeName: 'Barath' },
+  { taskTitle: 'Set up database schema', assigneeName: 'Aditya' },
+  { taskTitle: 'Create user api', assigneeName: 'Barath' },
+  { taskTitle: 'UI testing', assigneeName: 'Christo' },
+  { taskTitle: 'Finalize the website', assigneeName: 'Aditya' }
+]
+
+
+--- 16  Use $lookup to join tasks with projects, and filter tasks where project
+ status = active
+
+taskmanager> db.tasks.aggregate([ { $lookup: { from: "projects", localField: "projectId", foreignField: "_id",as: "project" }}, { $unwind: "$project" },{ $match: { "project.status": "active" } },{ $project: { _id: 0, taskTitle: "$title",projectTitle: "$project.title" }}])
+[
+  {
+    taskTitle: 'Design the website structure',
+    projectTitle: 'Project A'
+  },
+  { taskTitle: 'UI testing', projectTitle: 'Project A' },
+  { taskTitle: 'Finalize the website', projectTitle: 'Project A' }
+]
+
+
+---17 Use $group to get count of tasks per status
+taskmanager> db.tasks.aggregate([
+... {
+... $group:{
+... _id:"$status",
+... count:{$sum:1}}}])
+[
+  { _id: 'completed', count: 1 },
+  { _id: 'pending', count: 3 },
+  { _id: 'in progress', count: 1 }
+]
+
+
+---18Use $match , $sort , and $limit to get top 3 soonest due tasks
+taskmanager> db.tasks.aggregate([
+... {
+... $match:{
+... status:{$ne:"completed"}}},
+... {$sort:{dueDate:1}},
+... {$limit:3},
+... {$project:{
+... _id:0,
+... title:1,
+... dueDate:1}}])
+[
+  {
+    title: 'Finalize the website',
+    dueDate: ISODate('2025-05-28T00:00:00.000Z')
+  },
+  {
+    title: 'Set up database schema',
+    dueDate: ISODate('2025-05-30T00:00:00.000Z')
+  },
+  {
+    title: 'Design the website structure',
+    dueDate: ISODate('2025-06-01T00:00:00.000Z')
+  }
+]
