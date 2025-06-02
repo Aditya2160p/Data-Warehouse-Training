@@ -1,0 +1,21 @@
+Week 1- MongoDB 
+use employee_tracker; 
+--create collections 
+db.createCollection("task_feedback"); 
+--sample record 
+db.task_feedback.insertMany([ 
+...     { 
+...         employee_id: 1, 
+...         date: new Date("2025-03-12"), 
+...         feedback_type: "peer_review", 
+...         notes: "Excellent collaboration on the recent project. Demonstrated strong problem
+solving skills and team work."}, 
+...     { 
+...         employee_id: 2, 
+...         date: new Date("2025-03-13"), 
+...         feedback_type: "manager_review", 
+...         notes: "Needs improvement in time management. Late submission."}]); 
+--creating indexes for faster querying 
+
+db.task_feedback.createIndex({ employee_id: 1 }); 
+db.task_feedback.createIndex({ department: 1 });
